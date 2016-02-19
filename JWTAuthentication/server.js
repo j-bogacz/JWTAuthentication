@@ -51,15 +51,46 @@ app.get('/setup', function (req, res) {
 var apiRoutes = express.Router();
 
 // TODO: route to authenticate user (POST http://localhost:8080/api/authenticate)
+apiRoutes.post('/authenticate', function (req, res) {
+	User.findOne({ name: req.body.name }, function (err, user) {
+		if (err)
+			throw err;
+		
+		if (!user) {
+			res.json({ success: false, message: 'Authentication failed. User not found.' });
+		} else if (user) {
+			
+			// check if password matches
+			if (user.password != req.body.password) {
+				res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+			} else {
+				
+				// if user is found and password is right then create token
+				var token = jwt.sign(user, app.get('superSecret'), {
+					expiresInMinutes: 1440 // expires in 24H
+				});
+				
+				res.json({
+					success: true,
+					message: 'Enjoy your token!',
+					token: token
+				});
+			}
+		}
+	});
+});
+
+		
+
 
 // TODO: route middleware to verify token
 
-// rout to show random mesage (GET http://localhost:8080/api/)
+// route to show random mesage (GET http://localhost:8080/api/)
 apiRoutes.get('/', function (req, res) {
 	res.json({ message: 'Welcome to the coolest API in the world!' });
 });
 
-// rout to return all users(GET http://localhost/api/users)
+// route to return all users(GET http://localhost/api/users)
 apiRoutes.get('/users', function (req, res) {
 	User.find({}, function (err, users) {
 		if (err)
