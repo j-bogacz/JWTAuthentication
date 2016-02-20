@@ -50,7 +50,7 @@ app.get('/setup', function (req, res) {
 // get an instance of the router for API routes
 var apiRoutes = express.Router();
 
-// TODO: route to authenticate user (POST http://localhost:8080/api/authenticate)
+// route to authenticate user (POST http://localhost:8080/api/authenticate)
 apiRoutes.post('/authenticate', function (req, res) {
 	User.findOne({ name: req.body.name }, function (err, user) {
 		if (err)
@@ -80,10 +80,31 @@ apiRoutes.post('/authenticate', function (req, res) {
 	});
 });
 
-		
-
-
-// TODO: route middleware to verify token
+// route middleware to verify token
+apiRoutes.use(function (req, res, next) {
+	// check header or url parameters or post parameters for token
+	var token = req.body.token || req.query.token || req.headers['x-access-token'];
+	
+	// decode token
+	if (token) {
+		// verify secret and check expiry date
+		jwt.verify(token, app.get('superSecret'), function (err, decoded) {
+			if (err) {
+				return res.json({ success: false, message: 'Failed to authenticate token' });
+			} else {
+				// if everything is ok, save decoded token to request for use in other routes
+				req.decoded = decoded;
+				next();
+			}
+		});
+	} else {
+		// if there is no token, return an error
+		return res.status(403).send({
+			success: false,
+			message: 'No token provided'
+		});
+	}
+});
 
 // route to show random mesage (GET http://localhost:8080/api/)
 apiRoutes.get('/', function (req, res) {
