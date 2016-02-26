@@ -4,15 +4,17 @@ var app = express();
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var mongoose = require('mongoose');
+var path = require('path');
 
 var jwt = require('jsonwebtoken'); // used to create, sign and verify tokens
 var config = require('./config.js'); // get our config file
 var User = require('./app/model/user.js'); // get our mongoose model
 
 // configuration
-var port = process.env.PORT || 8080; // used to create, sign and verify tokens
-mongoose.connect(config.database); // connect to databse
+app.set('port', config.port);
 app.set('superSecret', config.secret); // secret variable
+var port = app.get('port');
+mongoose.connect(config.database); // connect to databse
 
 // use bode parser so we can get info from POST and/or URL parameters
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -28,10 +30,28 @@ app.get('/', function (req, res) {
 });
 app.get('/setup', function (req, res) {
 	
-	// create samle user
+	// create sample user
 	var user = new User({
 		name: 'John Doe',
 		password: '123',
+		email: 'john.doe@gmail.com',
+		admin: true
+	});
+	
+	// save user in database
+	user.save(function (err) {
+		if (err)
+			throw err;
+		
+		console.log('User saved successfully');
+		res.json({ success: true });
+	});
+
+	// create another sample user
+	var user = new User({
+		name: 'Jakub Bogacz',
+		password: '1234',
+		email: 'jakub.bogacz@outlook.com',
 		admin: true
 	});
 	
@@ -57,17 +77,17 @@ apiRoutes.post('/authenticate', function (req, res) {
 			throw err;
 		
 		if (!user) {
-			res.json({ success: false, message: 'Authentication failed. User not found.' });
+			res.status(401).json({ success: false, message: 'Authentication failed. User not found.' });
 		} else if (user) {
 			
 			// check if password matches
 			if (user.password != req.body.password) {
-				res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+				res.status(401).json({ success: false, message: 'Authentication failed. Wrong password.' });
 			} else {
 				
 				// if user is found and password is right then create token
 				var token = jwt.sign(user, app.get('superSecret'), {
-					expiresInMinutes: 1440 // expires in 24H
+					expiresIn: "1h" // expires in 1h
 				});
 				
 				res.json({
@@ -83,26 +103,40 @@ apiRoutes.post('/authenticate', function (req, res) {
 // route middleware to verify token
 apiRoutes.use(function (req, res, next) {
 	// check header or url parameters or post parameters for token
-	var token = req.body.token || req.query.token || req.headers['x-access-token'];
+	var token = req.body.token || req.query.token || req.headers['authorization'];
 	
 	// decode token
 	if (token) {
-		// verify secret and check expiry date
-		jwt.verify(token, app.get('superSecret'), function (err, decoded) {
-			if (err) {
-				return res.json({ success: false, message: 'Failed to authenticate token' });
+		var parts = token.split(' ');
+		if (parts.length == 2) {
+			var scheme = parts[0];
+			var credentials = parts[1];
+			
+			if (/^Bearer$/i.test(scheme)) {
+				
+				// verify secret and check expiry date
+				jwt.verify(credentials, app.get('superSecret'), function (err, decoded) {
+					if (err) {
+						// if there is invalid token, return an error
+						return res.status(401).json({ success: false, message: 'Failed to authenticate token' });
+					} else {
+						// if everything is ok, save decoded token to request for use in other routes
+						req.decoded = decoded;
+						next();
+					}
+				});
 			} else {
-				// if everything is ok, save decoded token to request for use in other routes
-				req.decoded = decoded;
-				next();
+				// if there is invalid token, return an error
+				return res.status(403).send({ success: false, message: 'No token provided' });
 			}
-		});
+			
+		} else {
+			// if there is invalid token, return an error
+			return res.status(403).send({ success: false, message: 'No token provided' });
+		}
 	} else {
 		// if there is no token, return an error
-		return res.status(403).send({
-			success: false,
-			message: 'No token provided'
-		});
+		return res.status(403).send({ success: false, message: 'No token provided' });
 	}
 });
 
@@ -127,4 +161,4 @@ app.use('/api', apiRoutes);
 
 // start the server
 app.listen(port);
-console.log('Magic happens at http://localhost:' + port);
+console.log('API server listen at http://localhost:' + port);
