@@ -2,9 +2,9 @@
 
 (function () {
 	angular.module('authApp')
-        .controller('UserController', UserController);
+	  .controller('UserController', UserController);
 	
-	function UserController($http) {
+	function UserController($http, apiUrl) {
 		
 		var vm = this;
 		
@@ -12,7 +12,7 @@
 		vm.error;
 		
 		vm.getUsers = function () {
-			$http.get('http://localhost:8080/api/users').success(function (users) {
+			$http.get(apiUrl + '/users').success(function (users) {
 				vm.users = users;
 			}).error(function (error) {
 				vm.error = error;

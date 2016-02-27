@@ -7,8 +7,7 @@ var path = require('path');
 var config = require('./config.js'); // get our config file
 
 // configuration
-app.set('port', config.port);
-var port = app.get('port');
+var port = process.env.PORT || config.port;
 
 // use morgan to log requests to console
 app.use(morgan('dev'));

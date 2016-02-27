@@ -11,10 +11,10 @@ var config = require('./config.js'); // get our config file
 var User = require('./app/model/user.js'); // get our mongoose model
 
 // configuration
-app.set('port', config.port);
-app.set('superSecret', config.secret); // secret variable
-var port = app.get('port');
+var port = process.env.PORT || config.port;
 mongoose.connect(config.database); // connect to databse
+
+app.set('superSecret', config.secret); // secret variable
 
 // use bode parser so we can get info from POST and/or URL parameters
 app.use(bodyParser.urlencoded({ extended: false }));

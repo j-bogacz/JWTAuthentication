@@ -2,11 +2,11 @@
 
 (function () {
 	angular.module('authApp', ['ui.router', 'satellizer'])
-		.config(function ($stateProvider, $urlRouterProvider, $authProvider) {
-		
+	  .constant('apiUrl', 'http://localhost:8081/api')
+	  .config(function ($stateProvider, $urlRouterProvider, $authProvider, apiUrl) {
 		// Satellizer configuration that specifies which API
 		// route the JWT should be retrieved from
-		$authProvider.baseUrl = 'http://localhost:8080/api';
+		$authProvider.baseUrl = apiUrl;
 		$authProvider.loginUrl = '/authenticate';
 		
 		// Redirect to the auth state if any other states
@@ -14,12 +14,12 @@
 		$urlRouterProvider.otherwise('/auth');
 		
 		$stateProvider
-			.state('auth', {
+				.state('auth', {
 			url: '/auth',
 			templateUrl: '../views/authView.html',
 			controller: 'AuthController as auth'
 		})
-			.state('users', {
+				.state('users', {
 			url: '/users',
 			templateUrl: '../views/userView.html',
 			controller: 'UserController as user'
