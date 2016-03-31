@@ -39,6 +39,7 @@
     <Compile Include="public\scripts\satellizer.min.js" />
     <Compile Include="public\scripts\userController.js" />
     <Compile Include="server.js" />
+    <Content Include="IISNode.yml" />
     <Content Include="package.json" />
     <Content Include="public\index.html" />
     <Content Include="public\stylesheets\bootstrap.min.css" />
