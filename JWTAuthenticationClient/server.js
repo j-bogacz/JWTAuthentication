@@ -13,14 +13,12 @@ var port = process.env.PORT || config.port;
 app.use(morgan('dev'));
 
 // serve static files
-//app.use(express.static('public'));
+app.use(express.static('public'));
 
 // routes
 // basic routes
 app.get('/', function (req, res) {
-	//res.sendFile(path.join(__dirname, 'public/index.html'));
-	res.writeHead(200, { 'Content-Type': 'text/plain' });
-	res.end('Hello World!!! Welcome to JWTAuthenticationClient!!!\n');
+	res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 // start the server
